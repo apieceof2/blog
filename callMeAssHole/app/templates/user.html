@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{%block page_content%}
+<div class="page-header">
+	<h1>{{ user.username }}</h1>
+	<nav><a href="{{url_for('main.editprofile')}}"><span class="label label-primary">修改个人信息</a></span></nav>
+	<br>
+	<p>姓名: {{user.name}}</p>
+	<p>关于: {{user.about_me}}</p>
+
+<br>
+{% if user == current_user %}
+
+{% endif%}
+
+</div>
+{%endblock%}

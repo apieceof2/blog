@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html"as wtf %}
+
+
+{% block page_content %}
+<div class="page-header">
+
+<h1>修改个人信息</h1><nav><a href="{{url_for('auth.resetpassword')}}"><span class="label label-primary">修改密码</a></span></nav>
+</div>
+{{wtf.quick_form(form)}}
+
+
+{% endblock %}
+

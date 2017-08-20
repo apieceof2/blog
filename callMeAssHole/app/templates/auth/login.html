@@ -1,0 +1,25 @@
+
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block page_content %}
+{% block head %}
+{{super()}}
+<style>
+.form-signin {
+    max-width: 330px;
+    padding: 15px;
+    margin: 0 auto;
+}
+</style>
+
+{% endblock %}
+
+<div class="page-header">
+
+<h1>Login</h1>
+
+</div>
+
+{{wtf.quick_form(form,extra_classes='form_signin')}}
+{% endblock%}
