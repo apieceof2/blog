@@ -171,13 +171,6 @@ class Post(db.Model):
 			db.session.add(p)
 			db.session.commit()
 
-#用户自引用关联表模型
-class Follow(db.Model):
-	__tablename__ = 'follows'
-	follower_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
-	followed_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
-	timestamp = db.Column(db.DateTime,default=datetime.utcnow)
-	
 			
 # 增加对Post模型中body的监听
 db.event.listen(Post.body,'set',Post.on_changed_body)
