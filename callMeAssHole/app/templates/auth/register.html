@@ -2,10 +2,20 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block page_content %}
-<div class="page-header">
+{%block head %}
+{{super()}}
+{% endblock%}
 
-<h1>注册</h1>
+
+{% block page_content %}
+
+
+<div class="container">
+	<div class="well well-sm">
+		<h2>注册</h2>
+		{{wtf.quick_form(form)}}
+	</div>
 </div>
-{{wtf.quick_form(form)}}
+
+
 {% endblock%}

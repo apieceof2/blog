@@ -46,17 +46,3 @@ def before_request():
 		current_user.ping()
 
 #修改密码
-@auth.route('/resetpassword',methods=['GET','POST'])
-@login_required
-def resetpassword():
-	form = ResetPassword()
-	if form.validate_on_submit():
-		user = User.query.filter_by(username=current_user.username).first()
-		if user.verify_password(form.oldpassword.data):
-			user.password = form.newpassword.data
-			db.session.add(user)
-			return redirect(url_for('main.index'))
-		else:
-			flash('原密码错了')
-	return render_template('auth/resetpassword.html',form=form)
-

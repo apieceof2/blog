@@ -2,24 +2,20 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block page_content %}
-{% block head %}
+{%block head%}
 {{super()}}
-<style>
-.form-signin {
-    max-width: 330px;
-    padding: 15px;
-    margin: 0 auto;
-}
-</style>
+{%endblock%}
 
-{% endblock %}
+{% block page_content %}
 
-<div class="page-header">
+	<div class="container">
+		<div class="well well-sm">
+		<h2>登录</h2>
+		{{wtf.quick_form(form)}}
+		</div>
+	</div>
 
-<h1>Login</h1>
-
-</div>
-
-{{wtf.quick_form(form,extra_classes='form_signin')}}
 {% endblock%}
+<%block whatever%>
+<h1>hello</h1>
+<%endblock%>

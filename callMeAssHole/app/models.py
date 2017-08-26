@@ -3,6 +3,8 @@ from flask_login import UserMixin,AnonymousUserMixin
 from werkzeug.security import generate_password_hash,check_password_hash
 from . import login_manager
 from datetime import datetime
+from markdown import markdown
+import bleach
 
 # 权限
 class Permission:
@@ -59,11 +61,35 @@ class User(UserMixin,db.Model):
 	role_id = db.Column(db.Integer,db.ForeignKey('roles.id'))
 	password_hash = db.Column(db.String(128))
 
+	#文章外键
+	posts = db.relationship('Post',backref='author',lazy='dynamic')
+
 	#用户信息
 	name = db.Column(db.String(64))
 	about_me = db.Column(db.Text())
 	memeber_since = db.Column(db.DateTime(),default=datetime.utcnow)
 	last_seen = db.Column(db.DateTime(),default=datetime.utcnow)
+
+	#生成虚拟数据
+	@staticmethod
+	def generate_fake(count=100):
+		from sqlalchemy.exc import IntegrityError
+		from random import seed
+		import forgery_py
+
+		seed()
+		for i in range(count):
+			u = User(username=forgery_py.internet.user_name(True),
+				role_id=1,
+				password=forgery_py.lorem_ipsum.word(),
+				name=forgery_py.name.full_name(),
+				about_me=forgery_py.lorem_ipsum.sentence(),
+				memeber_since=forgery_py.date.date(True))
+			db.session.add(u)
+			try:
+				db.session.commit()
+			except IntegrityError:
+				db.session.rollback()
 
 	#刷新最后访问的时间
 	def ping(self):
@@ -97,5 +123,62 @@ class AnonymousUser(AnonymousUserMixin):
 		return False
 	def is_administrator(self):
 		return False
-		
 login_manager.anonymous_user = AnonymousUser
+
+# 文章模型
+class Post(db.Model):
+	__tablename__ = 'posts'
+	id = db.Column(db.Integer,primary_key=True)
+	title = db.Column(db.String(64))
+	subtitle = db.Column(db.String(64))
+	body = db.Column(db.Text)
+	body_html = db.Column(db.Text)
+	body_browse = db.Column(db.Text)
+	body_browse_html= db.Column(db.Text)
+	timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+	author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+
+	@staticmethod
+	def on_changed_body(target,value,oldvalue,initiator):
+		target.body_browse=value[:200]
+		allowed_tags=['a','abbr','acronym','b','blockquote','code',
+		'em','i','li','ol','pre','strong','ul','h1','h2','h3','p'] 
+		target.body_html=bleach.linkify(bleach.clean(markdown(value,output_format='html'),
+			tags=allowed_tags,strip=True))
+
+	@staticmethod
+
+	def on_change_body_browse(target,value,oldvalue,initiator):
+		allowed_tags=['a','abbr','acronym','b','blockquote','code',
+		'em','i','li','ol','pre','strong','ul','h1','h2','h3','p'] 
+		target.body_browse_html=bleach.linkify(bleach.clean(markdown(value,output_format='html'),
+			tags=allowed_tags,strip=True))
+
+
+	@staticmethod
+	def generate_fake(count=100):
+		from random import seed,randint
+		import forgery_py
+
+		seed()
+		user_count = User.query.count()
+		for i in range(count):
+			u = User.query.offset(randint(0,user_count-1)).first()
+			p = Post(body=forgery_py.lorem_ipsum.sentences(randint(1,3)),
+				timestamp=forgery_py.date.date(True),
+				title=forgery_py.lorem_ipsum.sentence(),
+				author=u)
+			db.session.add(p)
+			db.session.commit()
+
+#用户自引用关联表模型
+class Follow(db.Model):
+	__tablename__ = 'follows'
+	follower_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+	followed_id = db.Column(db.Integer,db.ForeignKey('user.id'),primary_key=True)
+	timestamp = db.Column(db.DateTime,default=datetime.utcnow)
+	
+			
+# 增加对Post模型中body的监听
+db.event.listen(Post.body,'set',Post.on_changed_body)
+db.event.listen(Post.body_browse,'set',Post.on_change_body_browse)

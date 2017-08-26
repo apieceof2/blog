@@ -1,16 +1,25 @@
 {% extends "base.html" %}
+
+{% block head%}
+	{{super()}}
+	<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/base.css')}}">
+{%endblock%}
+
 {%block page_content%}
-<div class="page-header">
-	<h1>{{ user.username }}</h1>
-	<nav><a href="{{url_for('main.editprofile')}}"><span class="label label-primary">修改个人信息</a></span></nav>
-	<br>
-	<p>姓名: {{user.name}}</p>
-	<p>关于: {{user.about_me}}</p>
+		<div class="jumbotron well">
+			<h1>{{ user.username }}</h1>
 
-<br>
-{% if user == current_user %}
+			{% if user==current_user%}
+				<nav><a href="{{url_for('main.editprofile')}}"><span class="label label-primary">修改信息</a></span></nav>
+			{%endif%}
+			<br>
+			<p>姓名: {{user.name}}</p>
+			<p>关于: {{user.about_me}}</p>
 
-{% endif%}
-
-</div>
+			{% if current_user.is_administrator() %}
+				<a class="btn btn-danger" href="{{url_for('main.edit_profile_admin',id=user.id)}}">修改信息(管理员身份)</a>
+			{% endif %}
+			
+		</div>
+		{% include '_posts_browse.html' %}
 {%endblock%}

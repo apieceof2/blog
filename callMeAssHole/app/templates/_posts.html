@@ -1,0 +1,34 @@
+
+{%for post in posts %}
+<div class="panel panel-default">
+	
+	<div class="panel-body">
+		<a href="{{url_for('main.user',username=post.author.username)}}">
+			<span class="badge">
+				{{post.author.username}}&nbsp;&nbsp; &nbsp;&nbsp;{{moment(post.timestamp).fromNow()}}
+			</span>
+		</a>
+		<a href=""></a>
+		<div class="well well-lg">
+			{%if post.body_html%}
+			{{post.body_html | safe}}
+			{%else%}
+			{{post.body}}
+			{%endif%}
+			<nav>
+				<ul class="pager">
+					<li>
+						<a href="{{url_for('main.edit',id=post.id)}}">
+							<span class="glyphicon glyphicon-pencil"></span>
+						</a>
+					</li>
+				</ul>
+			</nav>
+		</div>
+
+
+	</div>
+
+
+</div>
+{%endfor%}

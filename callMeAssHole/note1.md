@@ -20,3 +20,7 @@ flask_mail smtp 服务器配置
 ==59==
 
 flask_login 要求实现的用户方法
+
+
+flask_sqlalchemy 分页对象的属性
+==121==
