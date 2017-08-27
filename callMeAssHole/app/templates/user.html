@@ -9,9 +9,12 @@
 		<div class="jumbotron well">
 			<h1>{{ user.username }}</h1>
 
+			<!--修改信息-->
 			{% if user==current_user%}
 				<nav><a href="{{url_for('main.editprofile')}}"><span class="label label-primary">修改信息</a></span></nav>
 			{%endif%}
+
+			<!--信息-->
 			<br>
 			<p>姓名: {{user.name}}</p>
 			<p>关于: {{user.about_me}}</p>
@@ -19,7 +22,8 @@
 			{% if current_user.is_administrator() %}
 				<a class="btn btn-danger" href="{{url_for('main.edit_profile_admin',id=user.id)}}">修改信息(管理员身份)</a>
 			{% endif %}
-			
+
+
 		</div>
 		{% include '_posts_browse.html' %}
 {%endblock%}

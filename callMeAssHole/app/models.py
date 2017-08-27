@@ -51,6 +51,16 @@ class Role(db.Model):
 	def __repr__(self):
 		return '<Role %r>' % self.name
 
+# # 用户关注关联表
+# class Follow(db.Model):
+# 	__tablename__ = 'follows'
+# 	follower_id = db.Column(db.Integer,db.ForeignKey('users.id'),
+# 							primary_key=True)
+# 	followed_id = db.Column(db.Integer,db.ForeignKey('users.id'),
+# 							primary_key=True)
+# 	timestamp = db.Column(db.DateTime,default=datetime.utcnow)
+
+
 #用户
 class User(UserMixin,db.Model):
 	__tablename__ = 'users'
@@ -61,35 +71,50 @@ class User(UserMixin,db.Model):
 	role_id = db.Column(db.Integer,db.ForeignKey('roles.id'))
 	password_hash = db.Column(db.String(128))
 
-	#文章外键
-	posts = db.relationship('Post',backref='author',lazy='dynamic')
-
 	#用户信息
 	name = db.Column(db.String(64))
 	about_me = db.Column(db.Text())
 	memeber_since = db.Column(db.DateTime(),default=datetime.utcnow)
 	last_seen = db.Column(db.DateTime(),default=datetime.utcnow)
 
-	#生成虚拟数据
-	@staticmethod
-	def generate_fake(count=100):
-		from sqlalchemy.exc import IntegrityError
-		from random import seed
-		import forgery_py
+	#文章关系
+	posts = db.relationship('Post',backref='author',lazy='dynamic')
 
-		seed()
-		for i in range(count):
-			u = User(username=forgery_py.internet.user_name(True),
-				role_id=1,
-				password=forgery_py.lorem_ipsum.word(),
-				name=forgery_py.name.full_name(),
-				about_me=forgery_py.lorem_ipsum.sentence(),
-				memeber_since=forgery_py.date.date(True))
-			db.session.add(u)
-			try:
-				db.session.commit()
-			except IntegrityError:
-				db.session.rollback()
+	#评论关系
+	comments = db.relationship('Comment',backref='author',lazy='dynamic')
+
+	# #用户关注多对多关系
+	# followed = db.relationship('Follow',
+	# 							foreign_keys=[Follow.follower_id],
+	# 							backref=db.backref('follower',lazy='joined'),
+	# 							lazy='dynamic',
+	# 							cascade='all, delete-orphan')
+	# follower = db.relationship('Follow',
+	# 							foreign_keys=[Follow.followed_id],
+	# 							backref=db.backref('followed',lazy='joined'),
+	# 							lazy='dynamic',
+	# 							cascade='all,delete-orphan')
+
+	# ## 关注的辅助方法
+	# def follow(self,user):
+	# 	if not self.is_following(user):
+	# 		f = Follow(follower=self,followed=user)
+	# 		db.session.add(f)
+
+	# def unfollow(self,user):
+	# 	f = self.followed.filter_by(followed_id=user.id).first()
+	# 	if f:
+	# 		db.session.delete(f)
+
+	# def is_following(self,user):
+	# 	return self.followed.filter_by(followed_id=user.id).first() is not None
+
+	# def is_followed_by(self,user):
+	# 	return self.follower.filter_by(follower_id=user.id).first() is not None
+
+
+
+
 
 	#刷新最后访问的时间
 	def ping(self):
@@ -117,6 +142,28 @@ class User(UserMixin,db.Model):
 
 	def __repr__(self):
 		return '<User %r>'%self.username
+
+	#生成虚拟数据
+	@staticmethod
+	def generate_fake(count=100):
+		from sqlalchemy.exc import IntegrityError
+		from random import seed
+		import forgery_py
+
+		seed()
+		for i in range(count):
+			u = User(username=forgery_py.internet.user_name(True),
+				role_id=1,
+				password=forgery_py.lorem_ipsum.word(),
+				name=forgery_py.name.full_name(),
+				about_me=forgery_py.lorem_ipsum.sentence(),
+				memeber_since=forgery_py.date.date(True))
+			db.session.add(u)
+			try:
+				db.session.commit()
+			except IntegrityError:
+				db.session.rollback()
+
 #游客
 class AnonymousUser(AnonymousUserMixin):
 	def can(self,permissions):
@@ -137,6 +184,9 @@ class Post(db.Model):
 	body_browse_html= db.Column(db.Text)
 	timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
 	author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+
+	#评论关系
+	comments = db.relationship('Comment',backref='post',lazy='dynamic')
 
 	@staticmethod
 	def on_changed_body(target,value,oldvalue,initiator):
@@ -171,7 +221,25 @@ class Post(db.Model):
 			db.session.add(p)
 			db.session.commit()
 
-			
-# 增加对Post模型中body的监听
+class Comment(db.Model):
+	__tablename__='comments'
+	id = db.Column(db.Integer,primary_key=True)
+	body = db.Column(db.Text)
+	body_html = db.Column(db.Text)
+	timestamp = db.Column(db.DateTime,index=True,default=datetime.utcnow)
+	disabled = db.Column(db.Boolean)
+	author_id = db.Column(db.Integer,db.ForeignKey('users.id'))
+	post_id = db.Column(db.Integer,db.ForeignKey('posts.id'))
+
+	@staticmethod
+	def on_changed_body(target,value,oldvalue,initiator):
+		allowed_tags=['a','abbr','acronym','b','code','em','i',
+		'strong']
+		target.body_html = bleach.linkify(bleach.clean(markdown(value,output_format='html'),
+			tags=allowed_tags,strip=True))
+
+
+#监听
+db.event.listen(Comment.body,'set',Comment.on_changed_body)
 db.event.listen(Post.body,'set',Post.on_changed_body)
 db.event.listen(Post.body_browse,'set',Post.on_change_body_browse)

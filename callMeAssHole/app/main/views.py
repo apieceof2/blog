@@ -2,9 +2,9 @@ from datetime import datetime
 from flask import render_template,session,redirect,url_for,abort,request,flash
 from ..decorators import permission_required
 from . import main
-from .forms import EditProfileForm,EditProfileAdminForm,PostForm
+from .forms import EditProfileForm,EditProfileAdminForm,PostForm,CommentForm
 from .. import db
-from ..models import User,Permission,Role,Post
+from ..models import User,Permission,Role,Post,Comment
 from wtforms.validators import Required
 from flask_login import current_user,login_required
 from app.decorators import admin_required
@@ -39,6 +39,10 @@ def user(username):
 		abort(404)
 	posts = user.posts.order_by(Post.timestamp.desc()).all()
 	return render_template('user.html',user = user,posts=posts)
+
+@main.route('/about')
+def about():
+	return render_template('about.html')
 
 #修改个人信息
 @main.route('/editprofile',methods=['GET','POST'])
@@ -77,10 +81,18 @@ def edit_profile_admin(id):
 	return render_template('editprofile.html',form=form,user=user)
 
 #文章的固定连接
-@main.route('/post/<int:id>')
+@main.route('/post/<int:id>',methods=['POST','GET'])
 def post(id):
 	post = Post.query.get_or_404(id)
-	return render_template('post.html',posts=[post])
+	form = CommentForm()
+	if form.validate_on_submit():
+		comment = Comment(body=form.body.data,post=post,author=current_user._get_current_object())
+		db.session.add(comment)
+		flash('评论成功')	
+		return redirect(url_for('.post',id=post.id))
+	comments=Comment.query.filter_by(post=post)
+	return render_template('post.html',posts=[post],form=form,
+		comments=comments)
 
 
 @main.route("/edit/<int:id>",methods=['GET','POST'])
@@ -98,3 +110,47 @@ def edit(id):
 		return redirect(url_for('main.post',id=post.id))
 	form.body.data = post.body
 	return render_template('edit_post.html',form=form)
+
+# #关注相关的路由
+# @main.route('/followers/<username>')
+# def followers(username):
+# 	user = User.query.filter_by(username=username).first()
+# 	if user is None:
+# 		flash('用户不存在')
+# 		return redirect(url_for('.index'))
+# 	page=request.arts.get('page',1,type=int)
+# 	pagination = user.followers.pagenate(
+# 		page,per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
+# 		error_out=False)
+# 	follows = [{'user':item.follower,'timestamp':item.timestamp} 
+# 	for item in pagination.items]
+# 	return render_template('followers.html',user=user,
+# 		pagination=pagination,follows=follows)
+
+# @main.route('/followed'<username>)
+# def followed(username):
+# 	user = User.query.filter_by(username=username).first()
+# 	if user is None:
+# 		flash("用户不存在")
+# 		return redirect(url_for('index'))	
+# 	page = request.arts.get('page',1,type=int)
+# 	pagination = user.followers.pagenate(
+# 		page,per_page=current_app.config['FLASKY_FOLLOWERS_PER_PAGE'],
+# 		error_out=False)
+# 	follows = [{'user':item.follower,'timestamp':item.timestamp}
+# 		for item in pagination.items]
+# 	return render_template('follwed.html',user=user,
+# 		pagination=pagination,follows=follows)
+
+# @main.route('/follow/<username>')
+# def follow(username):
+# 	user =User.query.filter_by(username=username).first()
+# 	if user is None:
+# 		flash('用户不存在')
+# 		return redirect(url_for('.index'))
+# 	if current_user.is_following(user):
+# 		flash('你已经关注这位用户')
+# 		return redirect(url_for('.user',username=username))
+# 	current_user.follow(user)
+# 	flash('成功关注')
+# 	return redict(url_for('.user',username=username))
