@@ -20,7 +20,10 @@
 			<li class="media">
 
 				<div class="media-body">
-					{{wtf.quick_form(form)}}
+					{% if current_user.can(Permission.COMMENT)%}
+						{{wtf.quick_form(form)}}
+					{%endif %}
+					
 					{% for comment in comments%}
 					<div class="media">
 						<div class="media-left">
@@ -29,7 +32,7 @@
 
 						<div class="media-body">
 							<div class="well well-lg">
-								<p>{{comment.body_html}}</p>
+								<p>{{comment.body_html | safe}}</p>
 
 							</div>
 						</div>
