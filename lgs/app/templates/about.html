@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block head%}
+	{{super()}}
+	<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/base.css')}}">
+{%endblock%}
+
+{%block page_content%}
+	<div class="well well-sm">
+		<h1>大家好</h1>
+		<p>这里是我的博客</p>
+	</div>
+{%endblock%}

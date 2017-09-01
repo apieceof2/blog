@@ -1,0 +1,11 @@
+body{
+	  background-color: #333;
+}
+a{
+	text-decoration:none;
+	color: #000000;
+}
+
+#textarea-ctrl{
+	height=10;
+}

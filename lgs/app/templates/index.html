@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html"as wtf %}
+
+{%block head%}
+{{super()}}
+<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/base.css')}}">
+{%endblock%}
+
+{% block page_content %}
+<div class="jumbotron well">
+	<h1>Hello</h1>
+	<p>不会起名字</p>
+	<p><a class="btn btn-default btn-lg" href="{{url_for('main.about')}}" role="button">了解更多</a></p>
+</div>
+
+
+{% if current_user.can(Permission.WRITE_ARTICLES)%}
+
+<div class="well well-lg">
+	
+	{{wtf.quick_form(form)}}
+</div> 
+
+{% endif %}
+
+
+{% include '_posts_browse.html'%}
+		<nav>
+			<ul class="pager">
+				{% if pagination.has_prev%}
+					<li class="previous"><a href="{{url_for('main.index',page=pagination.prev_num)}}"><span aria-hidden="true">&larr;</span>上一页</a></li>
+				{%else%}
+					<li class="previous disabled"><a href="#"><span aria-hidden="true">&larr;</span>上一页</a></li>
+				{%endif%}
+				{%if pagination.has_next%}
+					<li class="next"><a href="{{url_for('main.index',page=pagination.next_num)}}">下一页<span aria-hidden="true">&rarr;</span></a></li>
+				{%else%}
+					<li class="next disabled"><a href="#">下一页<span aria-hidden="true">&rarr;</span></a></li>
+				{%endif%}
+
+			</ul>
+		</nav>
+
+{% endblock %}

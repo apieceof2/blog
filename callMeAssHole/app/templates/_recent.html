@@ -8,13 +8,29 @@
 				{{post.author.username}}&nbsp;&nbsp; &nbsp;&nbsp;{{moment(post.timestamp).fromNow()}}
 			</span>
 		</a>
-		<h3>动态</h3>
+		
 		<div class="well well-lg">
 			{%if post.body_browse_html%}
 			{{post.body_browse_html | safe}}
 			{%else%}
 			{{post.body_browse}}
 			{%endif%}
+
+			{% for comment in post.comments.filter_by(unread=True).order_by(Comment.timestamp.desc()).all()%}
+					<div class="media">
+						<div class="media-left">
+							<a href="{{url_for('main.user',username=comment.author.username)}}"><h3 class="media-object"><span class="label label-default">{{comment.author.username}}</span></h3></a>
+						</div>
+
+						<div class="media-body">
+							<div class="well well-lg">
+								<p>{{comment.body_html | safe}}</p>
+
+							</div>
+						</div>
+					</div>
+			{%endfor%}
+
 			<nav>
 				<ul class="pager">
 					<li>
@@ -24,6 +40,7 @@
 					</li>
 				</ul>
 			</nav>
+			
 		</div>
 
 
